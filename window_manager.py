@@ -28,7 +28,8 @@ class RobloxWindowManager:
         def enum_windows(hwnd, lParam):
             if win32gui.IsWindowVisible(hwnd):
                 window_title = win32gui.GetWindowText(hwnd)
-                if 'roblox' in window_title.lower():
+                # Ищем только окна которые начинаются с "Roblox"
+                if window_title.startswith('Roblox'):
                     self.roblox_windows.append({
                         'hwnd': hwnd,
                         'title': window_title
@@ -52,7 +53,7 @@ class RobloxWindowManager:
         """Мониторить новые окна Roblox"""
         while not self.stop_monitoring:
             self.find_roblox_windows()
-            time.sleep(2)
+            time.sleep(1)
     
     def activate_control(self):
         """Активировать управление всеми окнами"""
@@ -69,7 +70,7 @@ class RobloxWindowManager:
         """Контролировать все окна Roblox"""
         
         def on_mouse_move(x, y):
-            if not self.is_active:
+            if not self.is_active or not self.roblox_windows:
                 return
             
             for window in self.roblox_windows:
@@ -84,12 +85,12 @@ class RobloxWindowManager:
                     
                     if 0 <= rel_x < window_width and 0 <= rel_y < window_height:
                         win32gui.PostMessage(window['hwnd'], win32con.WM_MOUSEMOVE, 
-                                           0, self._make_lparam(rel_x, rel_y))
+                                           0, self._make_lparam(int(rel_x), int(rel_y)))
                 except:
                     pass
         
         def on_mouse_click(x, y, button, pressed):
-            if not self.is_active:
+            if not self.is_active or not self.roblox_windows:
                 return
             
             for window in self.roblox_windows:
@@ -110,15 +111,15 @@ class RobloxWindowManager:
                     
                     if pressed:
                         win32gui.PostMessage(window['hwnd'], msg_down, 0, 
-                                           self._make_lparam(rel_x, rel_y))
+                                           self._make_lparam(int(rel_x), int(rel_y)))
                     else:
                         win32gui.PostMessage(window['hwnd'], msg_up, 0, 
-                                           self._make_lparam(rel_x, rel_y))
+                                           self._make_lparam(int(rel_x), int(rel_y)))
                 except:
                     pass
         
         def on_press(key):
-            if not self.is_active:
+            if not self.is_active or not self.roblox_windows:
                 return
             
             try:
@@ -133,7 +134,7 @@ class RobloxWindowManager:
                 pass
         
         def on_release(key):
-            if not self.is_active:
+            if not self.is_active or not self.roblox_windows:
                 return
             
             try:
@@ -158,8 +159,14 @@ class RobloxWindowManager:
         while self.is_active:
             time.sleep(0.1)
         
-        mouse_listener.stop()
-        keyboard_listener.stop()
+        try:
+            mouse_listener.stop()
+        except:
+            pass
+        try:
+            keyboard_listener.stop()
+        except:
+            pass
     
     def _make_lparam(self, x, y):
         """Создать LPARAM для отправки координат мыши"""
@@ -178,3 +185,8 @@ class RobloxWindowManager:
         """Остановить менеджер окон"""
         self.stop_monitoring = True
         self.deactivate_control()
+        for listener in self.listeners:
+            try:
+                listener.stop()
+            except:
+                pass
