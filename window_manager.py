@@ -28,8 +28,8 @@ class RobloxWindowManager:
         def enum_windows(hwnd, lParam):
             if win32gui.IsWindowVisible(hwnd):
                 window_title = win32gui.GetWindowText(hwnd)
-                # Ищем только окна которые начинаются с "Roblox"
-                if window_title.startswith('Roblox'):
+                # Ищем только окна которые содержат только "Roblox" и не содержат других слов
+                if window_title == 'Roblox':
                     self.roblox_windows.append({
                         'hwnd': hwnd,
                         'title': window_title
